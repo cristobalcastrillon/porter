@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Porter semantic profile",
+  "description": "Output of the profiling step: what each source column means and what is wrong with it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["columns", "candidate_keys", "notes"],
+  "properties": {
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/column" }
+    },
+    "candidate_keys": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "type": "string", "maxLength": 240 }
+    }
+  },
+  "$defs": {
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column", "semantic_type", "meaning", "formats", "canonical_values", "unit", "issues", "confidence"],
+      "properties": {
+        "column": { "type": "string", "minLength": 1 },
+        "semantic_type": {
+          "enum": [
+            "identifier", "categorical", "free_text", "integer", "decimal", "measurement",
+            "date", "datetime", "latitude", "longitude", "coordinate_pair", "address",
+            "boolean", "other"
+          ]
+        },
+        "meaning": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "formats": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "type": "string", "maxLength": 80 }
+        },
+        "canonical_values": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["canonical", "variants"],
+            "properties": {
+              "canonical": { "type": "string" },
+              "variants": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "unit": { "type": ["string", "null"], "maxLength": 20 },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "detail"],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "inconsistent_casing", "abbreviations", "mixed_formats", "embedded_unit",
+                  "ambiguous_date", "out_of_range", "missing_values", "duplicates",
+                  "combined_fields", "whitespace", "encoding", "other"
+                ]
+              },
+              "detail": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "assets",
+  "primary_key": "external_id",
+  "fields": [
+    {
+      "name": "external_id",
+      "type": "text",
+      "nullable": false,
+      "unique": true,
+      "description": "Stable identifier of the asset in the source system. Used as the idempotency key for writes."
+    },
+    {
+      "name": "species",
+      "type": "text",
+      "nullable": true,
+      "description": "Common English name of the tree species, e.g. 'London planetree'. Empty for stumps and dead trees."
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "nullable": false,
+      "enum": ["alive", "stump", "dead"],
+      "description": "Whether the tree is alive, a stump, or standing dead."
+    },
+    {
+      "name": "condition",
+      "type": "text",
+      "nullable": true,
+      "enum": ["good", "fair", "poor"],
+      "description": "Inspector's health rating. Only recorded for living trees."
+    },
+    {
+      "name": "diameter_cm",
+      "type": "decimal",
+      "nullable": true,
+      "minimum": 0,
+      "description": "Trunk diameter in centimeters, measured at breast height (1.37 m above the ground)."
+    },
+    {
+      "name": "latitude",
+      "type": "decimal",
+      "nullable": false,
+      "minimum": 40.47,
+      "maximum": 40.92,
+      "description": "WGS84 latitude of the asset."
+    },
+    {
+      "name": "longitude",
+      "type": "decimal",
+      "nullable": false,
+      "minimum": -74.27,
+      "maximum": -73.69,
+      "description": "WGS84 longitude of the asset."
+    },
+    {
+      "name": "borough",
+      "type": "text",
+      "nullable": false,
+      "enum": ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"],
+      "description": "New York City borough where the asset is located."
+    },
+    {
+      "name": "inspected_on",
+      "type": "date",
+      "nullable": true,
+      "description": "Date the asset was last inspected."
+    }
+  ]
+}

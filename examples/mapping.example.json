@@ -1,0 +1,160 @@
+{
+  "target": "assets",
+  "field_mappings": [
+    {
+      "target_field": "external_id",
+      "source_columns": ["TreeID"],
+      "transform": {
+        "kind": "cast",
+        "description": "Trim surrounding whitespace and convert the value to text.",
+        "params": { "target_type": "text" }
+      },
+      "confidence": 0.97,
+      "rationale": "TreeID is the only candidate key and its name matches. 97 repeated IDs are copies of earlier rows, which the upsert on external_id writes once."
+    },
+    {
+      "target_field": "species",
+      "source_columns": ["Species (common)"],
+      "transform": {
+        "kind": "expression",
+        "description": "Trim whitespace, group values case-insensitively, replace each with the most frequent spelling in its group, and turn blanks into null.",
+        "params": {}
+      },
+      "confidence": 0.9,
+      "rationale": "The target asks for the common English name, which is what 'Species (common)' holds; 'Latin Name' competes but holds scientific names. Casing varies (London planetree / LONDON PLANETREE)."
+    },
+    {
+      "target_field": "status",
+      "source_columns": ["Status"],
+      "transform": {
+        "kind": "map_values",
+        "description": "Replace each Status variant with the matching target value and reject any value not in the map.",
+        "params": {
+          "value_map": [
+            { "from": ["Alive", "alive", "A"], "to": "alive" },
+            { "from": ["Stump", "STUMP"], "to": "stump" },
+            { "from": ["Dead", "dead", "D"], "to": "dead" }
+          ],
+          "unmatched": "error"
+        }
+      },
+      "confidence": 0.97,
+      "rationale": "Name and values match the target enum one-to-one once casing and the letters A and D are normalized."
+    },
+    {
+      "target_field": "condition",
+      "source_columns": ["Cond."],
+      "transform": {
+        "kind": "map_values",
+        "description": "Replace each condition variant with the lower-case target value, turn blanks into null, and reject any other value.",
+        "params": {
+          "value_map": [
+            { "from": ["Good", "good", "G"], "to": "good" },
+            { "from": ["Fair", "fair", "F"], "to": "fair" },
+            { "from": ["Poor", "poor", "P"], "to": "poor" },
+            { "from": [""], "to": null }
+          ],
+          "unmatched": "error"
+        }
+      },
+      "confidence": 0.9,
+      "rationale": "'Cond.' is abbreviated, but its values are exactly Good/Fair/Poor plus single letters. The 212 blanks are stumps and dead trees, which the target leaves empty."
+    },
+    {
+      "target_field": "diameter_cm",
+      "source_columns": ["DBH", "Stump Dia"],
+      "transform": {
+        "kind": "conditional",
+        "description": "Use Stump Dia when Status maps to stump and DBH otherwise; strip any unit text, parse the number, multiply by 2.54 and round to 1 decimal.",
+        "params": {
+          "condition": "status == 'stump'",
+          "from_unit": "in",
+          "to_unit": "cm",
+          "factor": 2.54,
+          "decimals": 1
+        }
+      },
+      "confidence": 0.8,
+      "rationale": "DBH is diameter at breast height in inches, but it is 0 on all 141 stump rows, whose size is in Stump Dia. Mapped with the recommended answer to q1."
+    },
+    {
+      "target_field": "latitude",
+      "source_columns": ["Location"],
+      "transform": {
+        "kind": "split",
+        "description": "Remove parentheses and spaces, split on the comma, and parse the first part as a decimal.",
+        "params": { "separator": ",", "part_index": 0 }
+      },
+      "confidence": 0.93,
+      "rationale": "The first number in Location is always between 40.4 and 40.9, which is New York latitude."
+    },
+    {
+      "target_field": "longitude",
+      "source_columns": ["Location"],
+      "transform": {
+        "kind": "split",
+        "description": "Remove parentheses and spaces, split on the comma, and parse the second part as a decimal.",
+        "params": { "separator": ",", "part_index": 1 }
+      },
+      "confidence": 0.93,
+      "rationale": "The second number in Location is always between -74.3 and -73.7, which is New York longitude."
+    },
+    {
+      "target_field": "borough",
+      "source_columns": ["Boro"],
+      "transform": {
+        "kind": "map_values",
+        "description": "Replace each borough spelling or code with the full borough name and reject any value not in the map.",
+        "params": {
+          "value_map": [
+            { "from": ["Manhattan", "manhattan", "MN"], "to": "Manhattan" },
+            { "from": ["Bronx", "The Bronx", "BX"], "to": "Bronx" },
+            { "from": ["Brooklyn", "Bklyn", "BK"], "to": "Brooklyn" },
+            { "from": ["Queens", "queens", "QN"], "to": "Queens" },
+            { "from": ["Staten Island", "Staten Is", "S.I.", "SI"], "to": "Staten Island" }
+          ],
+          "unmatched": "error"
+        }
+      },
+      "confidence": 0.94,
+      "rationale": "'Boro' is abbreviated, but its values are the five boroughs written as full names, codes and short forms."
+    },
+    {
+      "target_field": "inspected_on",
+      "source_columns": ["Inspection Date"],
+      "transform": {
+        "kind": "parse_date",
+        "description": "Parse the date with each input format in order and keep the first that succeeds.",
+        "params": {
+          "input_formats": ["%m/%d/%Y", "%Y-%m-%d", "%b %d %Y"],
+          "day_first": false
+        }
+      },
+      "confidence": 0.93,
+      "rationale": "Slash dates have a second part above 12 (08/27/2015), so they are month-first; the other two formats are unambiguous."
+    }
+  ],
+  "unused_source_columns": [
+    { "column": "Latin Name", "reason": "Scientific name; the target's species field asks for the common name." },
+    { "column": "Address", "reason": "The target has no address field; location comes from coordinates." },
+    { "column": "Steward", "reason": "Not part of the target schema." },
+    { "column": "Guards", "reason": "Not part of the target schema." }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "target_field": "diameter_cm",
+      "question": "The 141 stump rows have DBH = 0 and their size in 'Stump Dia'. What should diameter_cm hold for stumps?",
+      "options": [
+        { "id": "a", "label": "Stump diameter for stumps, DBH for the rest", "effect": "Stump rows get their stump diameter in centimeters." },
+        { "id": "b", "label": "Leave diameter empty for stumps", "effect": "Stump rows get null instead of 0." },
+        { "id": "c", "label": "Use DBH for every row", "effect": "Stump rows are written with diameter_cm = 0." }
+      ],
+      "recommended": "a"
+    }
+  ],
+  "notes": [
+    "97 TreeID values repeat with identical rows; the upsert on external_id writes each tree once.",
+    "Condition and species are blank only on stump and dead rows, which matches the target's nullable fields."
+  ]
+}

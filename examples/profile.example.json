@@ -1,0 +1,198 @@
+{
+  "columns": [
+    {
+      "column": "TreeID",
+      "semantic_type": "identifier",
+      "meaning": "Numeric identifier of each tree in the source system.",
+      "formats": ["integer (180683)", "integer with surrounding spaces (' 180683 ')"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [
+        { "kind": "whitespace", "detail": "41 values have leading or trailing spaces." },
+        { "kind": "duplicates", "detail": "4,903 distinct values across 5,000 rows; 97 IDs repeat." }
+      ],
+      "confidence": 0.97
+    },
+    {
+      "column": "Inspection Date",
+      "semantic_type": "date",
+      "meaning": "Date the tree was surveyed.",
+      "formats": ["MM/DD/YYYY (08/27/2015)", "YYYY-MM-DD (2015-08-27)", "Mon DD YYYY (Aug 27 2015)"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [
+        { "kind": "mixed_formats", "detail": "Three date formats; shapes 99/99/9999 (61%), 9999-99-99 (27%), Aaa 99 9999 (12%)." }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "column": "Species (common)",
+      "semantic_type": "categorical",
+      "meaning": "Common English name of the tree species.",
+      "formats": ["title or lower case words (London planetree, honeylocust)", "upper case words (PIN OAK)"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [
+        { "kind": "inconsistent_casing", "detail": "Same names appear in several casings, e.g. 'London planetree' and 'LONDON PLANETREE'." },
+        { "kind": "missing_values", "detail": "212 blanks (4%), the same rows where Status is a stump or dead variant." }
+      ],
+      "confidence": 0.93
+    },
+    {
+      "column": "Latin Name",
+      "semantic_type": "categorical",
+      "meaning": "Scientific name of the tree species.",
+      "formats": ["genus species (Platanus x acerifolia)"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [
+        { "kind": "missing_values", "detail": "212 blanks, matching the blanks in 'Species (common)'." }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "column": "Status",
+      "semantic_type": "categorical",
+      "meaning": "Whether the tree is alive, a stump, or dead.",
+      "formats": ["title case word (Alive)", "lower case word (alive)", "upper case word (STUMP)", "single letter (A)"],
+      "canonical_values": [
+        { "canonical": "Alive", "variants": ["Alive", "alive", "A"] },
+        { "canonical": "Stump", "variants": ["Stump", "STUMP"] },
+        { "canonical": "Dead", "variants": ["Dead", "dead", "D"] }
+      ],
+      "unit": null,
+      "issues": [
+        { "kind": "inconsistent_casing", "detail": "'alive' (418) and 'STUMP' (9) alongside the title-case forms." },
+        { "kind": "abbreviations", "detail": "Single letters 'A' (203) and 'D' (6)." }
+      ],
+      "confidence": 0.97
+    },
+    {
+      "column": "Cond.",
+      "semantic_type": "categorical",
+      "meaning": "Health rating of the tree, apparently recorded only for living trees.",
+      "formats": ["title case word (Good)", "lower case word (fair)", "single letter (P)"],
+      "canonical_values": [
+        { "canonical": "Good", "variants": ["Good", "good", "G"] },
+        { "canonical": "Fair", "variants": ["Fair", "fair", "F"] },
+        { "canonical": "Poor", "variants": ["Poor", "poor", "P"] },
+        { "canonical": "", "variants": [""] }
+      ],
+      "unit": null,
+      "issues": [
+        { "kind": "abbreviations", "detail": "Single letters G, F, P in 9% of rows." },
+        { "kind": "missing_values", "detail": "212 blanks, all on rows whose Status is a stump or dead variant." }
+      ],
+      "confidence": 0.88
+    },
+    {
+      "column": "DBH",
+      "semantic_type": "measurement",
+      "meaning": "Trunk diameter at breast height, in inches.",
+      "formats": ["integer (12)", "number with ' in' suffix (12 in)", "number with inch mark (12\")"],
+      "canonical_values": [],
+      "unit": "in",
+      "issues": [
+        { "kind": "embedded_unit", "detail": "18% of values carry ' in' or '\"' after the number." },
+        { "kind": "out_of_range", "detail": "141 values are 0; every one is on a row whose Status is a stump variant." }
+      ],
+      "confidence": 0.86
+    },
+    {
+      "column": "Stump Dia",
+      "semantic_type": "measurement",
+      "meaning": "Diameter of the stump in inches; non-zero only on stump rows.",
+      "formats": ["integer (0, 14)"],
+      "canonical_values": [],
+      "unit": "in",
+      "issues": [
+        { "kind": "other", "detail": "4,859 of 5,000 values are 0; the 141 non-zero values match the stump rows." }
+      ],
+      "confidence": 0.84
+    },
+    {
+      "column": "Boro",
+      "semantic_type": "categorical",
+      "meaning": "New York City borough of the tree.",
+      "formats": ["full name (Brooklyn)", "two-letter code (BK)", "short form (Bklyn, S.I.)"],
+      "canonical_values": [
+        { "canonical": "Queens", "variants": ["Queens", "queens", "QN"] },
+        { "canonical": "Brooklyn", "variants": ["Brooklyn", "Bklyn", "BK"] },
+        { "canonical": "Staten Island", "variants": ["Staten Island", "Staten Is", "S.I.", "SI"] },
+        { "canonical": "Bronx", "variants": ["Bronx", "The Bronx", "BX"] },
+        { "canonical": "Manhattan", "variants": ["Manhattan", "manhattan", "MN"] }
+      ],
+      "unit": null,
+      "issues": [
+        { "kind": "abbreviations", "detail": "Two-letter codes (QN, BK, BX, MN, SI) and short forms (Bklyn, S.I., Staten Is)." },
+        { "kind": "inconsistent_casing", "detail": "'queens' and 'manhattan' in lower case." }
+      ],
+      "confidence": 0.96
+    },
+    {
+      "column": "Location",
+      "semantic_type": "coordinate_pair",
+      "meaning": "Latitude and longitude of the tree in one field, latitude first.",
+      "formats": ["lat, lon (40.7234, -73.9876)", "(lat, lon) with parentheses ((40.7234, -73.9876))"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [
+        { "kind": "combined_fields", "detail": "Two numbers in one value; the first is always 40.4–40.9 and the second -74.3 to -73.7." },
+        { "kind": "mixed_formats", "detail": "22% of values are wrapped in parentheses." }
+      ],
+      "confidence": 0.94
+    },
+    {
+      "column": "Address",
+      "semantic_type": "address",
+      "meaning": "Street address nearest to the tree.",
+      "formats": ["house number and street (108-005 70 AVENUE)"],
+      "canonical_values": [],
+      "unit": null,
+      "issues": [],
+      "confidence": 0.93
+    },
+    {
+      "column": "Steward",
+      "semantic_type": "categorical",
+      "meaning": "Number of signs of stewardship observed around the tree, as a range.",
+      "formats": ["range label (1or2, 4orMore)"],
+      "canonical_values": [
+        { "canonical": "None", "variants": ["None"] },
+        { "canonical": "1or2", "variants": ["1or2"] },
+        { "canonical": "3or4", "variants": ["3or4"] },
+        { "canonical": "4orMore", "variants": ["4orMore"] },
+        { "canonical": "", "variants": [""] }
+      ],
+      "unit": null,
+      "issues": [
+        { "kind": "missing_values", "detail": "212 blanks on stump and dead rows." }
+      ],
+      "confidence": 0.7
+    },
+    {
+      "column": "Guards",
+      "semantic_type": "categorical",
+      "meaning": "Whether a tree guard is present and whether it helps or harms the tree.",
+      "formats": ["single word (Helpful)"],
+      "canonical_values": [
+        { "canonical": "None", "variants": ["None"] },
+        { "canonical": "Helpful", "variants": ["Helpful"] },
+        { "canonical": "Harmful", "variants": ["Harmful"] },
+        { "canonical": "Unsure", "variants": ["Unsure"] },
+        { "canonical": "", "variants": [""] }
+      ],
+      "unit": null,
+      "issues": [
+        { "kind": "missing_values", "detail": "212 blanks on stump and dead rows." }
+      ],
+      "confidence": 0.78
+    }
+  ],
+  "candidate_keys": ["TreeID"],
+  "notes": [
+    "97 TreeID values repeat; the repeated rows look like exact copies of the first occurrence.",
+    "Location holds two coordinates in one field.",
+    "Species, condition, steward and guard fields are blank on the same 212 rows, all stumps or dead trees."
+  ]
+}

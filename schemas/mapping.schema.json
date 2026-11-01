@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Porter mapping proposal",
+  "description": "Output of the mapping step: how to fill every target field from the source columns, with confidence and open questions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target", "field_mappings", "unused_source_columns", "questions", "notes"],
+  "properties": {
+    "target": { "type": "string", "minLength": 1 },
+    "field_mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/field_mapping" }
+    },
+    "unused_source_columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["column", "reason"],
+        "properties": {
+          "column": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 200 }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/question" }
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "type": "string", "maxLength": 240 }
+    }
+  },
+  "$defs": {
+    "field_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_field", "source_columns", "transform", "confidence", "rationale"],
+      "properties": {
+        "target_field": { "type": "string", "minLength": 1 },
+        "source_columns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "transform": { "$ref": "#/$defs/transform" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "description", "params"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "copy", "cast", "map_values", "convert_unit", "parse_date",
+            "split", "conditional", "expression", "unmapped"
+          ]
+        },
+        "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "params": { "$ref": "#/$defs/params" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "cast" } } },
+          "then": { "properties": { "params": { "required": ["target_type"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "map_values" } } },
+          "then": { "properties": { "params": { "required": ["value_map", "unmatched"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "convert_unit" } } },
+          "then": { "properties": { "params": { "required": ["from_unit", "to_unit", "factor"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "parse_date" } } },
+          "then": { "properties": { "params": { "required": ["input_formats", "day_first"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "split" } } },
+          "then": { "properties": { "params": { "required": ["separator", "part_index"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "conditional" } } },
+          "then": { "properties": { "params": { "required": ["condition"] } } }
+        }
+      ]
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_type": { "enum": ["text", "integer", "decimal", "date", "boolean"] },
+        "value_map": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to"],
+            "properties": {
+              "from": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" },
+                "uniqueItems": true
+              },
+              "to": { "type": ["string", "number", "boolean", "null"] }
+            }
+          }
+        },
+        "unmatched": { "enum": ["error", "null", "keep"] },
+        "from_unit": { "type": "string", "minLength": 1 },
+        "to_unit": { "type": "string", "minLength": 1 },
+        "factor": { "type": "number", "exclusiveMinimum": 0 },
+        "decimals": { "type": "integer", "minimum": 0, "maximum": 6 },
+        "input_formats": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 2 },
+          "uniqueItems": true
+        },
+        "day_first": { "type": ["boolean", "null"] },
+        "separator": { "type": "string", "minLength": 1 },
+        "part_index": { "type": "integer", "minimum": 0 },
+        "condition": { "type": "string", "minLength": 1, "maxLength": 200 }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "target_field", "question", "options", "recommended"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^q[0-9]+$" },
+        "target_field": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "effect"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-c]$" },
+              "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+              "effect": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          }
+        },
+        "recommended": { "type": "string", "pattern": "^[a-c]$" }
+      }
+    }
+  }
+}
