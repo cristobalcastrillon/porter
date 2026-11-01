@@ -129,7 +129,30 @@
         "day_first": { "type": ["boolean", "null"] },
         "separator": { "type": "string", "minLength": 1 },
         "part_index": { "type": "integer", "minimum": 0 },
-        "condition": { "type": "string", "minLength": 1, "maxLength": 200 }
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "For kind 'conditional': source_columns[0] is the default branch and source_columns[1] is used when the condition is true. Grammar over already-computed target fields (target fields are computed in target order): field == 'value', field != 'value', field in ['a', 'b']."
+        },
+        "null_when_true": {
+          "type": "boolean",
+          "description": "For kind 'conditional': when true, list only the default column and produce null when the condition is true."
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "description": "The source_columns and transform this field gets if the user picks this option.",
+      "additionalProperties": false,
+      "required": ["source_columns", "transform"],
+      "properties": {
+        "source_columns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "transform": { "$ref": "#/$defs/transform" }
       }
     },
     "question": {
@@ -147,11 +170,12 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "label", "effect"],
+            "required": ["id", "label", "effect", "resolution"],
             "properties": {
               "id": { "type": "string", "pattern": "^[a-c]$" },
               "label": { "type": "string", "minLength": 1, "maxLength": 120 },
-              "effect": { "type": "string", "minLength": 1, "maxLength": 200 }
+              "effect": { "type": "string", "minLength": 1, "maxLength": 200 },
+              "resolution": { "$ref": "#/$defs/resolution" }
             }
           }
         },

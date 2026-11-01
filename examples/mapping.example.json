@@ -3,18 +3,24 @@
   "field_mappings": [
     {
       "target_field": "external_id",
-      "source_columns": ["TreeID"],
+      "source_columns": [
+        "TreeID"
+      ],
       "transform": {
         "kind": "cast",
         "description": "Trim surrounding whitespace and convert the value to text.",
-        "params": { "target_type": "text" }
+        "params": {
+          "target_type": "text"
+        }
       },
       "confidence": 0.97,
       "rationale": "TreeID is the only candidate key and its name matches. 97 repeated IDs are copies of earlier rows, which the upsert on external_id writes once."
     },
     {
       "target_field": "species",
-      "source_columns": ["Species (common)"],
+      "source_columns": [
+        "Species (common)"
+      ],
       "transform": {
         "kind": "expression",
         "description": "Trim whitespace, group values case-insensitively, replace each with the most frequent spelling in its group, and turn blanks into null.",
@@ -25,15 +31,37 @@
     },
     {
       "target_field": "status",
-      "source_columns": ["Status"],
+      "source_columns": [
+        "Status"
+      ],
       "transform": {
         "kind": "map_values",
         "description": "Replace each Status variant with the matching target value and reject any value not in the map.",
         "params": {
           "value_map": [
-            { "from": ["Alive", "alive", "A"], "to": "alive" },
-            { "from": ["Stump", "STUMP"], "to": "stump" },
-            { "from": ["Dead", "dead", "D"], "to": "dead" }
+            {
+              "from": [
+                "Alive",
+                "alive",
+                "A"
+              ],
+              "to": "alive"
+            },
+            {
+              "from": [
+                "Stump",
+                "STUMP"
+              ],
+              "to": "stump"
+            },
+            {
+              "from": [
+                "Dead",
+                "dead",
+                "D"
+              ],
+              "to": "dead"
+            }
           ],
           "unmatched": "error"
         }
@@ -43,16 +71,44 @@
     },
     {
       "target_field": "condition",
-      "source_columns": ["Cond."],
+      "source_columns": [
+        "Cond."
+      ],
       "transform": {
         "kind": "map_values",
         "description": "Replace each condition variant with the lower-case target value, turn blanks into null, and reject any other value.",
         "params": {
           "value_map": [
-            { "from": ["Good", "good", "G"], "to": "good" },
-            { "from": ["Fair", "fair", "F"], "to": "fair" },
-            { "from": ["Poor", "poor", "P"], "to": "poor" },
-            { "from": [""], "to": null }
+            {
+              "from": [
+                "Good",
+                "good",
+                "G"
+              ],
+              "to": "good"
+            },
+            {
+              "from": [
+                "Fair",
+                "fair",
+                "F"
+              ],
+              "to": "fair"
+            },
+            {
+              "from": [
+                "Poor",
+                "poor",
+                "P"
+              ],
+              "to": "poor"
+            },
+            {
+              "from": [
+                ""
+              ],
+              "to": null
+            }
           ],
           "unmatched": "error"
         }
@@ -62,7 +118,10 @@
     },
     {
       "target_field": "diameter_cm",
-      "source_columns": ["DBH", "Stump Dia"],
+      "source_columns": [
+        "DBH",
+        "Stump Dia"
+      ],
       "transform": {
         "kind": "conditional",
         "description": "Use Stump Dia when Status maps to stump and DBH otherwise; strip any unit text, parse the number, multiply by 2.54 and round to 1 decimal.",
@@ -79,39 +138,87 @@
     },
     {
       "target_field": "latitude",
-      "source_columns": ["Location"],
+      "source_columns": [
+        "Location"
+      ],
       "transform": {
         "kind": "split",
         "description": "Remove parentheses and spaces, split on the comma, and parse the first part as a decimal.",
-        "params": { "separator": ",", "part_index": 0 }
+        "params": {
+          "separator": ",",
+          "part_index": 0
+        }
       },
       "confidence": 0.93,
       "rationale": "The first number in Location is always between 40.4 and 40.9, which is New York latitude."
     },
     {
       "target_field": "longitude",
-      "source_columns": ["Location"],
+      "source_columns": [
+        "Location"
+      ],
       "transform": {
         "kind": "split",
         "description": "Remove parentheses and spaces, split on the comma, and parse the second part as a decimal.",
-        "params": { "separator": ",", "part_index": 1 }
+        "params": {
+          "separator": ",",
+          "part_index": 1
+        }
       },
       "confidence": 0.93,
       "rationale": "The second number in Location is always between -74.3 and -73.7, which is New York longitude."
     },
     {
       "target_field": "borough",
-      "source_columns": ["Boro"],
+      "source_columns": [
+        "Boro"
+      ],
       "transform": {
         "kind": "map_values",
         "description": "Replace each borough spelling or code with the full borough name and reject any value not in the map.",
         "params": {
           "value_map": [
-            { "from": ["Manhattan", "manhattan", "MN"], "to": "Manhattan" },
-            { "from": ["Bronx", "The Bronx", "BX"], "to": "Bronx" },
-            { "from": ["Brooklyn", "Bklyn", "BK"], "to": "Brooklyn" },
-            { "from": ["Queens", "queens", "QN"], "to": "Queens" },
-            { "from": ["Staten Island", "Staten Is", "S.I.", "SI"], "to": "Staten Island" }
+            {
+              "from": [
+                "Manhattan",
+                "manhattan",
+                "MN"
+              ],
+              "to": "Manhattan"
+            },
+            {
+              "from": [
+                "Bronx",
+                "The Bronx",
+                "BX"
+              ],
+              "to": "Bronx"
+            },
+            {
+              "from": [
+                "Brooklyn",
+                "Bklyn",
+                "BK"
+              ],
+              "to": "Brooklyn"
+            },
+            {
+              "from": [
+                "Queens",
+                "queens",
+                "QN"
+              ],
+              "to": "Queens"
+            },
+            {
+              "from": [
+                "Staten Island",
+                "Staten Is",
+                "S.I.",
+                "SI"
+              ],
+              "to": "Staten Island"
+            }
           ],
           "unmatched": "error"
         }
@@ -121,12 +228,18 @@
     },
     {
       "target_field": "inspected_on",
-      "source_columns": ["Inspection Date"],
+      "source_columns": [
+        "Inspection Date"
+      ],
       "transform": {
         "kind": "parse_date",
         "description": "Parse the date with each input format in order and keep the first that succeeds.",
         "params": {
-          "input_formats": ["%m/%d/%Y", "%Y-%m-%d", "%b %d %Y"],
+          "input_formats": [
+            "%m/%d/%Y",
+            "%Y-%m-%d",
+            "%b %d %Y"
+          ],
           "day_first": false
         }
       },
@@ -135,10 +248,22 @@
     }
   ],
   "unused_source_columns": [
-    { "column": "Latin Name", "reason": "Scientific name; the target's species field asks for the common name." },
-    { "column": "Address", "reason": "The target has no address field; location comes from coordinates." },
-    { "column": "Steward", "reason": "Not part of the target schema." },
-    { "column": "Guards", "reason": "Not part of the target schema." }
+    {
+      "column": "Latin Name",
+      "reason": "Scientific name; the target's species field asks for the common name."
+    },
+    {
+      "column": "Address",
+      "reason": "The target has no address field; location comes from coordinates."
+    },
+    {
+      "column": "Steward",
+      "reason": "Not part of the target schema."
+    },
+    {
+      "column": "Guards",
+      "reason": "Not part of the target schema."
+    }
   ],
   "questions": [
     {
@@ -146,9 +271,70 @@
       "target_field": "diameter_cm",
       "question": "The 141 stump rows have DBH = 0 and their size in 'Stump Dia'. What should diameter_cm hold for stumps?",
       "options": [
-        { "id": "a", "label": "Stump diameter for stumps, DBH for the rest", "effect": "Stump rows get their stump diameter in centimeters." },
-        { "id": "b", "label": "Leave diameter empty for stumps", "effect": "Stump rows get null instead of 0." },
-        { "id": "c", "label": "Use DBH for every row", "effect": "Stump rows are written with diameter_cm = 0." }
+        {
+          "id": "a",
+          "label": "Stump diameter for stumps, DBH for the rest",
+          "effect": "Stump rows get their stump diameter in centimeters.",
+          "resolution": {
+            "source_columns": [
+              "DBH",
+              "Stump Dia"
+            ],
+            "transform": {
+              "kind": "conditional",
+              "description": "Use Stump Dia when Status maps to stump and DBH otherwise; strip any unit text, parse the number, multiply by 2.54 and round to 1 decimal.",
+              "params": {
+                "condition": "status == 'stump'",
+                "from_unit": "in",
+                "to_unit": "cm",
+                "factor": 2.54,
+                "decimals": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "b",
+          "label": "Leave diameter empty for stumps",
+          "effect": "Stump rows get null instead of 0.",
+          "resolution": {
+            "source_columns": [
+              "DBH"
+            ],
+            "transform": {
+              "kind": "conditional",
+              "description": "Produce null when status is stump; otherwise strip any unit text from DBH, parse the number, multiply by 2.54 and round to 1 decimal.",
+              "params": {
+                "condition": "status == 'stump'",
+                "null_when_true": true,
+                "from_unit": "in",
+                "to_unit": "cm",
+                "factor": 2.54,
+                "decimals": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "c",
+          "label": "Use DBH for every row",
+          "effect": "Stump rows are written with diameter_cm = 0.",
+          "resolution": {
+            "source_columns": [
+              "DBH"
+            ],
+            "transform": {
+              "kind": "convert_unit",
+              "description": "Strip any unit text from DBH, parse the number, multiply by 2.54 and round to 1 decimal.",
+              "params": {
+                "from_unit": "in",
+                "to_unit": "cm",
+                "factor": 2.54,
+                "decimals": 1
+              }
+            }
+          }
+        }
       ],
       "recommended": "a"
     }
