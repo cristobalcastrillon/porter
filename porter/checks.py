@@ -61,6 +61,9 @@ def check_transform(
             errors.append(f"{name}: kind 'conditional' needs at least two source columns")
         errors.extend(_check_condition(name, params.get("condition", ""), list(fields)))
 
+    if kind == "expression" and len(cols) > 1:
+        errors.append(f"{name}: kind 'expression' sees one value, so it takes exactly one source column")
+
     if kind == "map_values":
         sources = [v for entry in params["value_map"] for v in entry["from"]]
         repeated = sorted({v for v in sources if sources.count(v) > 1})

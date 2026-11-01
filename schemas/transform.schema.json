@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Porter transform code",
+  "description": "Output of the code step: one small pure Python function per expression field.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["functions"],
+  "properties": {
+    "functions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_field", "code", "explanation"],
+        "properties": {
+          "target_field": { "type": "string", "minLength": 1 },
+          "code": { "type": "string", "minLength": 1, "maxLength": 12000 },
+          "explanation": { "type": "string", "minLength": 1, "maxLength": 300 }
+        }
+      }
+    }
+  }
+}
