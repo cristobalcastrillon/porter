@@ -1,0 +1,60 @@
+{
+  "external_id": {
+    "source_columns": [
+      "TreeID"
+    ],
+    "kind": "cast",
+    "also_accept": [
+      "copy"
+    ]
+  },
+  "species": {
+    "source_columns": [
+      "Species (common)"
+    ],
+    "kind": "expression"
+  },
+  "status": {
+    "source_columns": [
+      "Status"
+    ],
+    "kind": "map_values"
+  },
+  "condition": {
+    "source_columns": [
+      "Cond."
+    ],
+    "kind": "map_values"
+  },
+  "diameter_cm": {
+    "source_columns": [
+      "DBH",
+      "Stump Dia"
+    ],
+    "kind": "conditional"
+  },
+  "latitude": {
+    "source_columns": [
+      "Location"
+    ],
+    "kind": "split"
+  },
+  "longitude": {
+    "source_columns": [
+      "Location"
+    ],
+    "kind": "split"
+  },
+  "borough": {
+    "source_columns": [
+      "Boro"
+    ],
+    "kind": "map_values"
+  },
+  "inspected_on": {
+    "source_columns": [
+      "Inspection Date"
+    ],
+    "kind": "parse_date"
+  }
+}
