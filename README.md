@@ -23,7 +23,7 @@ flowchart LR
     A[Messy CSV] --> B[1 · Profile<br/>stats in Python<br/>+ Muse Spark]
     B --> C[2 · Map<br/>Muse Wonder<br/>confidence + questions]
     C --> D{3 · Approve<br/>human review}
-    D --> E[4 · Transform + dry run<br/>generated Python<br/>every row validated]
+    D --> E[4 · Transform + dry run<br/>engine + reviewed code<br/>every row validated]
     E --> F[5 · Write<br/>batched upserts<br/>retries + resume]
     F --> G[(Target API)]
 ```
@@ -31,7 +31,7 @@ flowchart LR
 1. **Profile.** Python computes statistics for each column: inferred type, nulls, distinct values, value shapes, and up to 20 sample values. **Muse Spark** turns them into a semantic profile covering what the column means, its formats and units, and every spelling of each category (`Good`, `good`, `G`).
 2. **Map.** **Muse Wonder** reads the profile and the target's schema, taken from its OpenAPI spec, and proposes how to fill each target field. Options include copying, mapping values, converting units, parsing dates and splitting a combined field. Each proposal comes with a confidence score and the evidence behind it. When the data can't settle a business question, such as *should stumps get their stump diameter?*, it asks instead of guessing.
 3. **Approve.** Fields below 0.85 confidence, and every open question, go to review. Nothing moves until a human approves.
-4. **Transform and dry run.** The model writes the approved mapping once as plain Python, which you can review. That code runs over every row without calling the model again, and validates each result against the target schema. Every failing row is listed with the reason.
+4. **Transform and dry run.** A deterministic engine applies the approved mapping. For the few fields it can't express, the model writes one small pure Python function, once; you review it, and an AST check limits what it can import and touch. All of this runs over every row without calling the model again, and each result is validated against the target schema. Every failing row is listed with the reason.
 5. **Write.** Porter sends batched upserts keyed on the target's primary key, with retries and exponential backoff on 429 and 5xx errors. A checkpoint records the last committed batch, so a run that is killed resumes where it stopped, and running it again never creates duplicates.
 
 ## Where the Meta models do the work
@@ -40,9 +40,9 @@ flowchart LR
 | --- | --- | --- |
 | Profile | Muse Spark | Meaning, formats, units and category variants of every column |
 | Map | Muse Wonder | Which column fills which field, how to transform it, how confident it is, and what to ask |
-| Transform code | Muse Wonder | The Python that applies the approved mapping |
+| Transform code | Muse Wonder | A small Python function for each field the deterministic engine can't express |
 
-The model sees statistics and a few sample values per column, never the full dataset, and it never transforms rows itself. That makes a migration cheap, repeatable and auditable: the same approved mapping always produces the same output.
+The model sees statistics and a few sample values per column, plus the distinct values of any column it writes code for. It never sees the full dataset and never transforms rows itself. That makes a migration cheap, repeatable and auditable: the same approved mapping always produces the same output.
 
 Model output is checked twice before Porter trusts it: once against a JSON Schema (`schemas/`), and once by semantic checks (`porter/checks.py`). The semantic checks catch invented column names, value maps that miss a variant, values outside the target's allowed set, and target fields left out. If a check fails, the errors go back to the model for one retry.
 
@@ -71,7 +71,7 @@ Results are averaged over TODO seeded variants of the file.
 ## Safety by design
 
 - **Human approval gate:** low-confidence fields and open questions block the write.
-- **No model on the data path:** transforms are generated once, reviewed, and run deterministically.
+- **No model on the data path:** the engine is deterministic, and generated functions are written once, reviewed, checked and then run without the model.
 - **Dry run first:** every row is validated against the target schema before any write.
 - **Idempotent writes:** upserts keyed on the primary key make re-runs safe.
 - **Resumable:** checkpoints let a killed run continue from the last committed batch.
@@ -79,16 +79,25 @@ Results are averaged over TODO seeded variants of the file.
 
 ## Quickstart
 
-TODO: confirm the commands once the code is in place.
-
 ```bash
-git clone https://github.com/TODO/porter.git && cd porter
+git clone https://github.com/cristobalcastrillon/porter.git && cd porter
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # META_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+cp .env.example .env   # MODEL_API_KEY, META_BASE_URL, PORTER_PROFILE_MODEL, PORTER_MAPPING_MODEL, SUPABASE_URL, SUPABASE_SECRET_KEY
 python -m porter.make_dirty --rows 5000 --seed 7
+python -m porter.smoke # one cheap call, to check the key
 streamlit run app.py
 ```
+
+The target table is in `sql/001_assets.sql`. The UI walks the steps and shows the write command to run in a terminal:
+
+```bash
+python -m porter.write --run <run_id>
+PORTER_FAULTS=429:0.15 python -m porter.write --run <run_id> --pace 0.5   # simulated 429s, slow enough to watch
+python -m porter.evaluate --seeds 3                                       # writes results.md
+```
+
+Kill the writer at any point and run the same command to resume. To try everything with no API key, use `PORTER_FAKE_LLM=1 streamlit run app.py` and `pytest`.
 
 ## Built during the hackathon
 

@@ -29,10 +29,12 @@ def new_run(source: Path, run_id: str | None = None) -> Path:
 
 
 def list_runs() -> list[str]:
+    """Runs to offer in the UI, newest first. Benchmark runs are left out."""
     root = runs_root()
     if not root.exists():
         return []
-    return sorted((p.name for p in root.iterdir() if (p / "run.json").exists()), reverse=True)
+    runs = (p.name for p in root.iterdir() if (p / "run.json").exists() and not p.name.startswith("eval-"))
+    return sorted(runs, reverse=True)
 
 
 def read_json(path: Path) -> dict:
