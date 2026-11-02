@@ -3,7 +3,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from porter.llm import LLMError, api_schema, call_json, cost_usd, load_prompt, load_schema, run_cost
+from porter.llm import (
+    API_MAX_DEPTH, LLMError, api_schema, call_json, cost_usd, load_prompt, load_schema, run_cost, schema_depth,
+)
 
 VALUES = {
     "source_name": "x.csv", "row_count": 1, "column_count": 1,
@@ -43,6 +45,19 @@ def test_placeholder_inside_a_value_is_not_expanded():
 def test_api_schema_has_no_allof():
     assert "allOf" in json.dumps(load_schema("mapping"))
     assert "allOf" not in json.dumps(api_schema(load_schema("mapping")))
+
+
+@pytest.mark.parametrize("name", ["profile", "mapping", "transform"])
+def test_api_schema_is_inlined_and_within_depth_limit(name):
+    sent = api_schema(load_schema(name))
+    assert "$ref" not in json.dumps(sent) and "$defs" not in sent
+    assert schema_depth(sent) <= API_MAX_DEPTH
+
+
+def test_api_schema_keeps_top_level_field_mapping_structure():
+    sent = api_schema(load_schema("mapping"))
+    params = sent["properties"]["field_mappings"]["items"]["properties"]["transform"]["properties"]["params"]
+    assert params["properties"]["value_map"]["items"]["properties"]["from"]["type"] == "array"
 
 
 def test_fake_mode_returns_example(tmp_path):

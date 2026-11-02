@@ -28,6 +28,7 @@ FAKE_REPLIES = {
     "transform": ROOT / "examples" / "transform.example.json",
 }
 REQUEST_TIMEOUT_SECONDS = 600
+API_MAX_DEPTH = 10
 
 Check = Callable[[dict], list[str]]
 
@@ -62,13 +63,49 @@ def load_schema(name: str) -> dict:
     return json.loads((ROOT / "schemas" / f"{name}.schema.json").read_text())
 
 
-def api_schema(schema: Any) -> Any:
-    """The schema as sent to the API: the same, minus every allOf block."""
-    if isinstance(schema, dict):
-        return {k: api_schema(v) for k, v in schema.items() if k != "allOf"}
-    if isinstance(schema, list):
-        return [api_schema(v) for v in schema]
-    return schema
+def api_schema(schema: dict) -> dict:
+    """The schema as sent to the API.
+
+    The API rejects allOf and schemas nested more than 10 levels deep, so refs are
+    inlined, allOf is dropped, and any object or array at the depth limit keeps only
+    its type. Replies are still validated locally against the full schema.
+    """
+    defs = schema.get("$defs", {})
+
+    def walk(node: Any, depth: int) -> Any:
+        if isinstance(node, list):
+            return [walk(v, depth) for v in node]
+        if not isinstance(node, dict):
+            return node
+        if "$ref" in node:
+            return walk(defs[node["$ref"].removeprefix("#/$defs/")], depth)
+        level = depth + 1 if node.get("type") in ("object", "array") else depth
+        if level >= API_MAX_DEPTH and ("properties" in node or "items" in node):
+            return {k: node[k] for k in ("type", "description") if k in node}
+        out = {}
+        for key, value in node.items():
+            if key in ("allOf", "$defs", "$schema"):
+                continue
+            if key == "properties":
+                out[key] = {name: walk(sub, level) for name, sub in value.items()}
+            elif key == "items":
+                out[key] = walk(value, level)
+            else:
+                out[key] = value
+        return out
+
+    return walk(schema, 0)
+
+
+def schema_depth(node: Any) -> int:
+    """Object and array levels in an inlined schema, counting the root as 1."""
+    if not isinstance(node, dict):
+        return 0
+    children = list(node.get("properties", {}).values())
+    if "items" in node:
+        children.append(node["items"])
+    below = max((schema_depth(c) for c in children), default=0)
+    return below + (1 if node.get("type") in ("object", "array") else 0)
 
 
 def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float | None:
