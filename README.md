@@ -6,7 +6,7 @@ Porter reads a messy export, works out what each column means, and proposes how 
 
 Built solo for the [Meta Global AI Developer Hackathon 2026](https://cerebralvalley.ai/e/meta-ai-developer-hackathon) (Indie track, *Build for Your World*) with Meta's Muse models.
 
-> 🎥 **Demo (3 min):** TODO · 📊 **Mapping accuracy on the benchmark:** TODO
+> 🎥 **Demo (3 min):** TODO · 📊 **Benchmark:** 99.85 % of cells correct after transform, 0 rows rejected, $0.70 per migration ([results.md](results.md))
 
 ## Why this matters
 
@@ -61,12 +61,16 @@ The generator records the correct mapping, so accuracy is measured, not eyeballe
 
 | Metric | Result |
 | --- | --- |
-| Target fields mapped correctly | TODO / 9 |
-| Cell values matching ground truth after transform | TODO % |
-| Rows rejected by the dry run, each with a reason | TODO |
-| Model cost per migration | TODO USD |
+| Target fields mapped correctly | 7.7 / 9 (8.7 / 9 counting copy and cast as equal) |
+| Cell values matching ground truth after transform | 99.85 % |
+| Rows rejected by the dry run, each with a reason | 0 |
+| Model cost per migration | 0.70 USD |
 
-Results are averaged over TODO seeded variants of the file.
+Results are averaged over 3 seeded variants of the file (seeds 7–9, 5,000 rows each), with Muse Spark 1.3 and Muse Wonder 1.0. The benchmark accepts the model's recommended answer to every question, so a wrong recommendation counts against it. The misses, per seed, are in [results.md](results.md):
+
+- `external_id` was mapped as a plain copy instead of a cast every time. Both produce the same text.
+- On one seed the model asked what diameter stumps should get, but recommended the wrong option, so 141 stump rows got 0. A person reviewing the question in the UI would catch this.
+- 51 `species` cells keep the wrong casing. These are rare species that appear once or twice, so there is no majority spelling to restore.
 
 ## Safety by design
 
@@ -101,7 +105,7 @@ Kill the writer at any point and run the same command to resume. To try everythi
 
 ## Built during the hackathon
 
-Everything in this repository was written during the hackathon (Oct 26 – Nov 4, 2026). No code from earlier projects or from any employer is reused. The commit history shows the full build, starting with TODO.
+Everything in this repository was written during the hackathon (Oct 26 – Nov 4, 2026). No code from earlier projects or from any employer is reused. The commit history shows the full build, starting with `b2d99ea` (Nov 1).
 
 ## Limitations and next steps
 
