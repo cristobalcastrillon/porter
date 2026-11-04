@@ -51,6 +51,13 @@ def test_check_requires_recommended_resolution_to_match():
     assert any("must equal the mapping" in e for e in check_mapping(bad, PROFILE, TARGET))
 
 
+def test_check_refuses_copying_a_mixed_case_column():
+    assert check_mapping(MAPPING, PROFILE, TARGET) == []
+    bad = copy.deepcopy(MAPPING)
+    field(bad, "species")["transform"] = {"kind": "copy", "description": "Copy the name.", "params": {}}
+    assert any("species: the profile reports inconsistent casing" in e for e in check_mapping(bad, PROFILE, TARGET))
+
+
 def test_check_covers_option_resolutions():
     bad = copy.deepcopy(MAPPING)
     bad["questions"][0]["options"][2]["resolution"]["source_columns"] = ["Diameter"]

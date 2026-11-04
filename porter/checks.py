@@ -134,6 +134,10 @@ def check_mapping(mapping: dict, profile: dict, target: dict) -> list[str]:
         c["column"]: {v for g in c["canonical_values"] for v in g["variants"]}
         for c in profile["columns"]
     }
+    mixed_case = {
+        c["column"] for c in profile["columns"]
+        if any(i["kind"] == "inconsistent_casing" for i in c.get("issues", []))
+    }
 
     mapped = [m["target_field"] for m in mapping["field_mappings"]]
     if mapped != list(fields):
@@ -142,6 +146,11 @@ def check_mapping(mapping: dict, profile: dict, target: dict) -> list[str]:
     used: set[str] = set()
     for m in mapping["field_mappings"]:
         used.update(m["source_columns"])
+        if m["transform"]["kind"] in ("copy", "cast") and mixed_case & set(m["source_columns"]):
+            errors.append(
+                f"{m['target_field']}: the profile reports inconsistent casing in {m['source_columns']}, "
+                "so copying keeps every spelling; normalise it with map_values or expression"
+            )
         errors.extend(
             check_transform(m["target_field"], m["source_columns"], m["transform"], fields, source_cols, variants)
         )
