@@ -6,7 +6,7 @@ Porter reads a messy export, works out what each column means, and proposes how 
 
 Built solo for the [Meta Global AI Developer Hackathon 2026](https://cerebralvalley.ai/e/meta-ai-developer-hackathon) (Indie track, *Build for Your World*) with Meta's Muse models.
 
-> 🎥 **Demo (3 min):** TODO · 📊 **Benchmark:** 99.85 % of cells correct after transform, 0 rows rejected, $0.70 per migration ([results.md](results.md))
+> 🎥 **Demo (2 min):** [youtu.be/noBMZMP02yQ](https://youtu.be/noBMZMP02yQ) · 📊 **Benchmark:** 99.85 % of cells correct after transform, 0 rows rejected, $0.70 per migration ([results.md](results.md))
 
 ## Why this matters
 
